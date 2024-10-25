@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contratar Música en Vivo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Música en Vivo</div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="navegarA('inicio')">Inicio</a></li>
+                <li><a href="#" onclick="navegarA('buscar-musicos')">Buscar Músicos</a></li>
+                <li><a href="#" onclick="navegarA('registro')">Registro</a></li>
+                <li><a href="#" onclick="navegarA('perfil')">Perfil</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container" id="contenido-principal">
+        <!-- Contenido dinámico cargado aquí -->
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.10.1/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5.10.1/main.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.10.1/main.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5.10.1/main.min.css">
+    <script src="script.js"></script>
+</body>
+</html>
