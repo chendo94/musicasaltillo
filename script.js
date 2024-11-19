@@ -1,11 +1,11 @@
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCdJhqShExKd253olISMM7tXPf371qjHx8",
-    authDomain: "appstudio-3f8ce.firebaseapp.com",
-    projectId: "appstudio-3f8ce",
-    storageBucket: "appstudio-3f8ce.appspot.com",
-    messagingSenderId: "968910013298",
-    appId: "1:968910013298:web:6f10ae0303ccc6785b93eb"
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_DOMINIO.firebaseapp.com",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_STORAGE_BUCKET.appspot.com",
+    messagingSenderId: "TU_MESSAGING_ID",
+    appId: "TU_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 
@@ -13,19 +13,16 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// Navegación dinámica
 function navegarA(pagina) {
     const contenido = document.getElementById('contenido-principal');
     switch (pagina) {
         case 'inicio':
             contenido.innerHTML = `
-                <section class="hero">
-                    <h1>Bienvenido a Música en Vivo</h1>
-                    <p>Descubre y contrata los mejores talentos musicales para tus eventos.</p>
-                    <button class="cta-button" onclick="verificarSesion()">Iniciar Sesión</button>
-                    <button class="cta-button" onclick="iniciarSesionConGoogle()">Iniciar Sesión con Google</button>
-                </section>
+                <div id="mapa" style="width: 100%; height: 400px;"></div>
+                <button class="cta-button" onclick="solicitarGrupo()">Solicitar Grupo</button>
+                <button class="cta-button" onclick="cerrarSesion()">Cerrar Sesión</button>
             `;
+            cargarMapa();
             break;
         case 'registro':
             contenido.innerHTML = `
@@ -41,37 +38,40 @@ function navegarA(pagina) {
             auth.onAuthStateChanged(user => {
                 if (user) {
                     db.collection('usuarios').doc(user.uid).get().then(doc => {
-                        if (doc.exists) {
-                            const userData = doc.data();
-                            contenido.innerHTML = `
-                                <div class="form-container">
-                                    <h2>Perfil de ${userData.tipoUsuario === 'musico' ? 'Músico/Grupo' : 'Cliente'}</h2>
-                                    <p>Bienvenido, ${user.email}</p>
-                                    ${userData.tipoUsuario === 'musico' ? `
-                                        <h3>${userData.nombreGrupo || ''}</h3>
-                                        <p>Género: ${userData.generoMusical || ''}</p>
-                                        <textarea placeholder="Descripción">${userData.descripcion || ''}</textarea>
-                                        <button onclick="actualizarPerfilMusico()">Actualizar Perfil</button>
-                                    ` : `
-                                        <p>Accede a nuestros servicios exclusivos para clientes.</p>
-                                    `}
-                                    <button onclick="cerrarSesion()">Cerrar Sesión</button>
-                                </div>
-                            `;
-                        }
+                        const userData = doc.data();
+                        contenido.innerHTML = `
+                            <h2>Perfil</h2>
+                            <p>Nombre: ${userData.tipoUsuario === 'musico' ? userData.nombreGrupo : user.email}</p>
+                            <p>Tipo: ${userData.tipoUsuario}</p>
+                            <button onclick="cerrarSesion()">Cerrar Sesión</button>
+                        `;
                     });
                 } else {
                     navegarA('registro');
                 }
             });
             break;
-        default:
-            contenido.innerHTML = `<p>Página no encontrada</p>`;
-            break;
     }
 }
 
-// Inicio de sesión con Google
+function cargarMapa() {
+    const mapa = new google.maps.Map(document.getElementById('mapa'), {
+        center: { lat: 25.4234, lng: -100.9936 },
+        zoom: 13
+    });
+
+    db.collection('usuarios').where('tipoUsuario', '==', 'musico').get().then(snapshot => {
+        snapshot.forEach(doc => {
+            const musico = doc.data();
+            new google.maps.Marker({
+                position: { lat: musico.lat, lng: musico.lng },
+                map: mapa,
+                title: musico.nombreGrupo
+            });
+        });
+    });
+}
+
 function iniciarSesionConGoogle() {
     auth.signInWithPopup(provider)
         .then(result => {
@@ -80,70 +80,52 @@ function iniciarSesionConGoogle() {
                 if (!doc.exists) {
                     navegarA('registro');
                 } else {
-                    navegarA('perfil');
+                    navegarA('inicio');
                 }
             });
         })
         .catch(error => {
             console.error("Error al iniciar sesión con Google:", error);
-            alert("Error al iniciar sesión con Google: " + error.message);
         });
 }
 
-// Verificar sesión existente
-function verificarSesion() {
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            navegarA('perfil');
-        } else {
-            navegarA('registro');
-        }
-    });
-}
-
-// Mostrar formulario de registro
 function mostrarFormularioRegistro(tipoUsuario) {
     const contenido = document.getElementById('contenido-principal');
     contenido.innerHTML = `
         <div class="form-container">
-            <h2>Registro de ${tipoUsuario === 'musico' ? 'Músico/Grupo' : 'Cliente'}</h2>
-            <input type="email" id="email" placeholder="Correo electrónico">
+            <h2>Registro de ${tipoUsuario === 'musico' ? 'Músico' : 'Cliente'}</h2>
+            <input type="email" id="email" placeholder="Correo">
             <input type="password" id="password" placeholder="Contraseña">
             ${tipoUsuario === 'musico' ? `
-                <input type="text" id="nombre-grupo" placeholder="Nombre del grupo">
-                <input type="text" id="genero-musical" placeholder="Género musical">
-                <textarea id="descripcion" placeholder="Descripción"></textarea>
+                <input type="text" id="nombre-grupo" placeholder="Nombre del Grupo">
             ` : ''}
-            <button onclick="registrar('${tipoUsuario}')">Registrarse</button>
+            <button onclick="registrar('${tipoUsuario}')">Registrar</button>
             <button onclick="navegarA('inicio')">Cancelar</button>
         </div>
     `;
 }
 
-// Registro de usuario
 function registrar(tipoUsuario) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const extraData = tipoUsuario === 'musico' ? {
-        nombreGrupo: document.getElementById('nombre-grupo').value,
-        generoMusical: document.getElementById('genero-musical').value,
-        descripcion: document.getElementById('descripcion').value
-    } : {};
+    const nombreGrupo = tipoUsuario === 'musico' ? document.getElementById('nombre-grupo').value : null;
 
     auth.createUserWithEmailAndPassword(email, password)
         .then(userCredential => {
             const user = userCredential.user;
             return db.collection('usuarios').doc(user.uid).set({
-                email: email,
-                tipoUsuario: tipoUsuario,
-                ...extraData
+                email,
+                tipoUsuario,
+                ...(nombreGrupo ? { nombreGrupo } : {})
             });
         })
         .then(() => {
-            alert("Registro exitoso. ¡Bienvenido!");
-            navegarA('perfil');
+            alert("Registro exitoso");
+            navegarA('inicio');
         })
-        .catch(error => {
-            console.error("Error al registrar:", error);
-            alert("Error al registrar: " + error.message);
-    
+        .catch(error => console.error("Error en el registro:", error));
+}
+
+function cerrarSesion() {
+    auth.signOut().then(() => navegarA('inicio')).catch(error => console.error("Error al cerrar sesión:", error));
+}
